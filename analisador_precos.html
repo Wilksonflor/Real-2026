@@ -243,6 +243,14 @@
     </div>
 
     <script>
+      // Função para formatar valores monetários
+      function formatarMoeda(valor) {
+        return valor.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
       function analisarPrecos() {
         const input = document.getElementById("priceInput").value;
         if (!input.trim()) {
@@ -312,11 +320,20 @@
         // Armazenar preços processados globalmente
         precosProcessados = precos;
 
+        // Calcular ticket médio
+        const valorTotal = precos.reduce((sum, preco) => sum + preco, 0);
+        const ticketMedio = valorTotal / precos.length;
+
         // Exibir resultados
-        exibirResultados(ordenados, precos.length, maisRepetido);
+        exibirResultados(ordenados, precos.length, maisRepetido, ticketMedio);
       }
 
-      function exibirResultados(ordenados, totalPrecos, maisRepetido) {
+      function exibirResultados(
+        ordenados,
+        totalPrecos,
+        maisRepetido,
+        ticketMedio
+      ) {
         const resultsDiv = document.getElementById("results");
         const summaryDiv = document.getElementById("summary");
         const priceListDiv = document.getElementById("priceList");
@@ -328,25 +345,26 @@
                  <p><strong>Valores únicos encontrados:</strong> ${
                    ordenados.length
                  }</p>
-                                   <p><strong>Menor valor:</strong> R$ ${parseFloat(
-                                     ordenados[0][0]
-                                   )
-                                     .toFixed(2)
-                                     .replace(".", ",")} (${
+                                                                       <p><strong>Menor valor:</strong> R$ ${formatarMoeda(
+                                                                         parseFloat(
+                                                                           ordenados[0][0]
+                                                                         )
+                                                                       )} (${
           ordenados[0][1]
         } vezes)</p>
-                                    <p><strong>Maior valor:</strong> R$ ${parseFloat(
-                                      ordenados[ordenados.length - 1][0]
-                                    )
-                                      .toFixed(2)
-                                      .replace(".", ",")} (${
+                                     <p><strong>Maior valor:</strong> R$ ${formatarMoeda(
+                                       parseFloat(
+                                         ordenados[ordenados.length - 1][0]
+                                       )
+                                     )} (${
           ordenados[ordenados.length - 1][1]
         } vezes)</p>
-                  <p><strong>Valor mais repetido:</strong> R$ ${parseFloat(
-                    maisRepetido[0]
-                  )
-                    .toFixed(2)
-                    .replace(".", ",")} (${maisRepetido[1]} vezes)</p>
+                   <p><strong>Valor mais repetido:</strong> R$ ${formatarMoeda(
+                     parseFloat(maisRepetido[0])
+                   )} (${maisRepetido[1]} vezes)</p>
+                   <p><strong>Ticket médio:</strong> R$ ${formatarMoeda(
+                     ticketMedio
+                   )}</p>
              `;
 
         // Lista de preços
@@ -355,15 +373,15 @@
 
         ordenados.forEach(([preco, quantidade]) => {
           html += `
-                    <div class="result-item">
-                        <span class="price">R$ ${parseFloat(preco)
-                          .toFixed(2)
-                          .replace(".", ",")}</span>
-                        <span class="count">${quantidade} ${
+                     <div class="result-item">
+                         <span class="price">R$ ${formatarMoeda(
+                           parseFloat(preco)
+                         )}</span>
+                         <span class="count">${quantidade} ${
             quantidade === 1 ? "vez" : "vezes"
           }</span>
-                    </div>
-                `;
+                     </div>
+                 `;
         });
 
         html += "</div>";

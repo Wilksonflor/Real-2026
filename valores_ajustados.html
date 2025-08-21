@@ -107,6 +107,14 @@
     </div>
 
     <script>
+      // Função para formatar valores monetários
+      function formatarMoeda(valor) {
+        return valor.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
       // Função para receber dados da página principal
       function receberDadosAjustados(dados) {
         // Armazenar dados globalmente para PDF
@@ -137,21 +145,37 @@
         );
         const diferencaTotal = valorTotalAjustado - valorTotalOriginal;
 
+        // Calcular ticket médio
+        const ticketMedioOriginal =
+          valorTotalOriginal / valoresAjustados.length;
+        const ticketMedioAjustado =
+          valorTotalAjustado / valoresAjustados.length;
+        const diferencaTicketMedio = ticketMedioAjustado - ticketMedioOriginal;
+
         // Resumo
         adjustedSummaryDiv.innerHTML = `
            <div class="summary">
              <h3>📊 Resumo dos Ajustes</h3>
              <p><strong>Valores ajustados:</strong> ${totalAjustados}</p>
              <p><strong>Valores sem ajuste:</strong> ${totalSemAjuste}</p>
-             <p><strong>Valor total original:</strong> R$ ${valorTotalOriginal
-               .toFixed(2)
-               .replace(".", ",")}</p>
-             <p><strong>Valor total ajustado:</strong> R$ ${valorTotalAjustado
-               .toFixed(2)
-               .replace(".", ",")}</p>
-             <p><strong>Diferença total:</strong> R$ ${diferencaTotal
-               .toFixed(2)
-               .replace(".", ",")}</p>
+                           <p><strong>Valor total original:</strong> R$ ${formatarMoeda(
+                             valorTotalOriginal
+                           )}</p>
+              <p><strong>Valor total ajustado:</strong> R$ ${formatarMoeda(
+                valorTotalAjustado
+              )}</p>
+              <p><strong>Diferença total:</strong> R$ ${formatarMoeda(
+                diferencaTotal
+              )}</p>
+              <p><strong>Ticket médio original:</strong> R$ ${formatarMoeda(
+                ticketMedioOriginal
+              )}</p>
+              <p><strong>Ticket médio ajustado:</strong> R$ ${formatarMoeda(
+                ticketMedioAjustado
+              )}</p>
+              <p><strong>Diferença no ticket médio:</strong> R$ ${formatarMoeda(
+                diferencaTicketMedio
+              )}</p>
              <p><strong>Faixas configuradas:</strong> ${faixas.length}</p>
            </div>
          `;
@@ -202,16 +226,16 @@
             valor.original > 0 ? (diferenca / valor.original) * 100 : 0;
 
           tableHtml += `
-               <tr>
-                 <td>R$ ${valor.original.toFixed(2).replace(".", ",")} ${
+                <tr>
+                  <td>R$ ${formatarMoeda(valor.original)} ${
             valor.quantidade > 1 ? `(${valor.quantidade}x)` : ""
           }</td>
-                 <td>R$ ${valor.ajustado.toFixed(2).replace(".", ",")}</td>
-                 <td>R$ ${diferenca.toFixed(2).replace(".", ",")}</td>
-                 <td>${valor.faixa}</td>
-                 <td>${valor.percentual}%</td>
-               </tr>
-             `;
+                  <td>R$ ${formatarMoeda(valor.ajustado)}</td>
+                  <td>R$ ${formatarMoeda(diferenca)}</td>
+                  <td>${valor.faixa}</td>
+                  <td>${valor.percentual}%</td>
+                </tr>
+              `;
         });
 
         tableHtml += `
@@ -260,6 +284,13 @@
         );
         const diferencaTotal = valorTotalAjustado - valorTotalOriginal;
 
+        // Calcular ticket médio
+        const ticketMedioOriginal =
+          valorTotalOriginal / valoresAjustados.length;
+        const ticketMedioAjustado =
+          valorTotalAjustado / valoresAjustados.length;
+        const diferencaTicketMedio = ticketMedioAjustado - ticketMedioOriginal;
+
         // Configurar PDF
         doc.setFontSize(18);
         doc.text("💰 Valores Ajustados - Relatório", 20, 20);
@@ -275,23 +306,39 @@
         doc.text(`Valores sem ajuste: ${totalSemAjuste}`, 30, yPos);
         yPos += 8;
         doc.text(
-          `Valor total original: R$ ${valorTotalOriginal
-            .toFixed(2)
-            .replace(".", ",")}`,
+          `Valor total original: R$ ${formatarMoeda(valorTotalOriginal)}`,
           30,
           yPos
         );
         yPos += 8;
         doc.text(
-          `Valor total ajustado: R$ ${valorTotalAjustado
-            .toFixed(2)
-            .replace(".", ",")}`,
+          `Valor total ajustado: R$ ${formatarMoeda(valorTotalAjustado)}`,
           30,
           yPos
         );
         yPos += 8;
         doc.text(
-          `Diferença total: R$ ${diferencaTotal.toFixed(2).replace(".", ",")}`,
+          `Diferença total: R$ ${formatarMoeda(diferencaTotal)}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(
+          `Ticket médio original: R$ ${formatarMoeda(ticketMedioOriginal)}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(
+          `Ticket médio ajustado: R$ ${formatarMoeda(ticketMedioAjustado)}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(
+          `Diferença no ticket médio: R$ ${formatarMoeda(
+            diferencaTicketMedio
+          )}`,
           30,
           yPos
         );
@@ -322,11 +369,11 @@
         const tableData = valoresUnicosArray.map((valor) => {
           const diferenca = valor.ajustado - valor.original;
           return [
-            `R$ ${valor.original.toFixed(2).replace(".", ",")}${
+            `R$ ${formatarMoeda(valor.original)}${
               valor.quantidade > 1 ? ` (${valor.quantidade}x)` : ""
             }`,
-            `R$ ${valor.ajustado.toFixed(2).replace(".", ",")}`,
-            `R$ ${diferenca.toFixed(2).replace(".", ",")}`,
+            `R$ ${formatarMoeda(valor.ajustado)}`,
+            `R$ ${formatarMoeda(diferenca)}`,
             valor.faixa,
             `${valor.percentual}%`,
           ];
@@ -391,4 +438,3 @@
     </script>
   </body>
 </html>
-
