@@ -442,20 +442,8 @@
         }
       }
 
-      // Carregar dados do arquivo sem livros.txt automaticamente se disponível
+      // Inicializar valores de exemplo nas faixas
       window.onload = function () {
-        // Tentar carregar o arquivo sem livros.txt
-        fetch("sem livros.txt")
-          .then((response) => response.text())
-          .then((data) => {
-            document.getElementById("priceInput").value = data;
-          })
-          .catch((error) => {
-            console.log(
-              "Arquivo sem livros.txt não encontrado. Use a opção de carregar arquivo."
-            );
-          });
-
         // Preencher valores de exemplo nas faixas
         document.getElementById("min1").value = "300";
         document.getElementById("max1").value = "350";
