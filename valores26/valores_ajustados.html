@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Valores Ajustados - Analisador de Preços</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .adjusted-results {
+        margin-top: 20px;
+        background: #e8f5e8;
+        padding: 15px;
+        border-radius: 4px;
+        border-left: 4px solid #28a745;
+      }
+      .comparison-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+      }
+      .comparison-table th,
+      .comparison-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+      }
+      .comparison-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+      }
+      .comparison-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .summary {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+      .back-button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 20px 0;
+      }
+      .back-button:hover {
+        background-color: #0056b3;
+      }
+      .pdf-button {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 10px;
+      }
+      .pdf-button:hover {
+        background-color: #c82333;
+      }
+      .button-group {
+        text-align: center;
+        margin: 20px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>💰 Valores Ajustados</h1>
+
+      <div class="button-group">
+        <button onclick="window.close()" class="back-button">
+          ← Fechar Aba
+        </button>
+        <button onclick="gerarPDF()" class="pdf-button">📄 Baixar PDF</button>
+      </div>
+
+      <div class="adjusted-results" id="adjustedResults">
+        <h2>💰 Valores Ajustados</h2>
+        <div id="adjustedSummary"></div>
+        <div id="adjustedTable"></div>
+      </div>
+    </div>
+
+    <script>
+      // Função para receber dados da página principal
+      function receberDadosAjustados(dados) {
+        // Armazenar dados globalmente para PDF
+        dadosGlobais = dados;
+
+        const valoresAjustados = dados.valoresAjustados;
+        const faixas = dados.faixas;
+
+        exibirValoresAjustados(valoresAjustados, faixas);
+      }
+
+      function exibirValoresAjustados(valoresAjustados, faixas) {
+        const adjustedSummaryDiv = document.getElementById("adjustedSummary");
+        const adjustedTableDiv = document.getElementById("adjustedTable");
+
+        // Calcular estatísticas
+        const totalAjustados = valoresAjustados.filter(
+          (v) => v.ajustado !== v.original
+        ).length;
+        const totalSemAjuste = valoresAjustados.length - totalAjustados;
+        const valorTotalOriginal = valoresAjustados.reduce(
+          (sum, v) => sum + v.original,
+          0
+        );
+        const valorTotalAjustado = valoresAjustados.reduce(
+          (sum, v) => sum + v.ajustado,
+          0
+        );
+        const diferencaTotal = valorTotalAjustado - valorTotalOriginal;
+
+        // Resumo
+        adjustedSummaryDiv.innerHTML = `
+           <div class="summary">
+             <h3>📊 Resumo dos Ajustes</h3>
+             <p><strong>Valores ajustados:</strong> ${totalAjustados}</p>
+             <p><strong>Valores sem ajuste:</strong> ${totalSemAjuste}</p>
+             <p><strong>Valor total original:</strong> R$ ${valorTotalOriginal
+               .toFixed(2)
+               .replace(".", ",")}</p>
+             <p><strong>Valor total ajustado:</strong> R$ ${valorTotalAjustado
+               .toFixed(2)
+               .replace(".", ",")}</p>
+             <p><strong>Diferença total:</strong> R$ ${diferencaTotal
+               .toFixed(2)
+               .replace(".", ",")}</p>
+             <p><strong>Faixas configuradas:</strong> ${faixas.length}</p>
+           </div>
+         `;
+
+        // Tabela de comparação
+        let tableHtml = `
+            <h3>📋 Comparação de Valores (Valores Únicos)</h3>
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>Valor Original</th>
+                  <th>Valor Ajustado</th>
+                  <th>Diferença</th>
+                  <th>Faixa Aplicada</th>
+                  <th>Ajuste (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+          `;
+
+        // Ordenar valores do menor para o maior (por valor original)
+        const valoresOrdenados = valoresAjustados.sort(
+          (a, b) => a.original - b.original
+        );
+
+        // Agrupar valores únicos e contar repetições
+        const valoresUnicos = {};
+        valoresOrdenados.forEach((valor) => {
+          const chave = valor.original;
+          if (!valoresUnicos[chave]) {
+            valoresUnicos[chave] = {
+              ...valor,
+              quantidade: 1,
+            };
+          } else {
+            valoresUnicos[chave].quantidade++;
+          }
+        });
+
+        // Converter para array e ordenar
+        const valoresUnicosArray = Object.values(valoresUnicos).sort(
+          (a, b) => a.original - b.original
+        );
+
+        valoresUnicosArray.forEach((valor) => {
+          const diferenca = valor.ajustado - valor.original;
+          const diferencaPercentual =
+            valor.original > 0 ? (diferenca / valor.original) * 100 : 0;
+
+          tableHtml += `
+               <tr>
+                 <td>R$ ${valor.original.toFixed(2).replace(".", ",")} ${
+            valor.quantidade > 1 ? `(${valor.quantidade}x)` : ""
+          }</td>
+                 <td>R$ ${valor.ajustado.toFixed(2).replace(".", ",")}</td>
+                 <td>R$ ${diferenca.toFixed(2).replace(".", ",")}</td>
+                 <td>${valor.faixa}</td>
+                 <td>${valor.percentual}%</td>
+               </tr>
+             `;
+        });
+
+        tableHtml += `
+             </tbody>
+           </table>
+         `;
+
+        adjustedTableDiv.innerHTML = tableHtml;
+      }
+
+      // Função para gerar PDF
+      function gerarPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Obter dados do localStorage ou da página
+        const dadosSalvos = localStorage.getItem("valoresAjustados");
+        let dados;
+
+        if (dadosSalvos) {
+          dados = JSON.parse(dadosSalvos);
+        } else {
+          // Se não há dados no localStorage, precisamos dos dados globais
+          if (typeof dadosGlobais === "undefined") {
+            alert("Dados não disponíveis para gerar PDF");
+            return;
+          }
+          dados = dadosGlobais;
+        }
+
+        const valoresAjustados = dados.valoresAjustados;
+        const faixas = dados.faixas;
+
+        // Calcular estatísticas
+        const totalAjustados = valoresAjustados.filter(
+          (v) => v.ajustado !== v.original
+        ).length;
+        const totalSemAjuste = valoresAjustados.length - totalAjustados;
+        const valorTotalOriginal = valoresAjustados.reduce(
+          (sum, v) => sum + v.original,
+          0
+        );
+        const valorTotalAjustado = valoresAjustados.reduce(
+          (sum, v) => sum + v.ajustado,
+          0
+        );
+        const diferencaTotal = valorTotalAjustado - valorTotalOriginal;
+
+        // Configurar PDF
+        doc.setFontSize(18);
+        doc.text("💰 Valores Ajustados - Relatório", 20, 20);
+
+        doc.setFontSize(12);
+        let yPos = 40;
+
+        // Resumo
+        doc.text("📊 Resumo dos Ajustes:", 20, yPos);
+        yPos += 10;
+        doc.text(`Valores ajustados: ${totalAjustados}`, 30, yPos);
+        yPos += 8;
+        doc.text(`Valores sem ajuste: ${totalSemAjuste}`, 30, yPos);
+        yPos += 8;
+        doc.text(
+          `Valor total original: R$ ${valorTotalOriginal
+            .toFixed(2)
+            .replace(".", ",")}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(
+          `Valor total ajustado: R$ ${valorTotalAjustado
+            .toFixed(2)
+            .replace(".", ",")}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(
+          `Diferença total: R$ ${diferencaTotal.toFixed(2).replace(".", ",")}`,
+          30,
+          yPos
+        );
+        yPos += 8;
+        doc.text(`Faixas configuradas: ${faixas.length}`, 30, yPos);
+        yPos += 20;
+
+        // Preparar dados únicos para tabela
+        const valoresOrdenados = valoresAjustados.sort(
+          (a, b) => a.original - b.original
+        );
+        const valoresUnicos = {};
+
+        valoresOrdenados.forEach((valor) => {
+          const chave = valor.original;
+          if (!valoresUnicos[chave]) {
+            valoresUnicos[chave] = { ...valor, quantidade: 1 };
+          } else {
+            valoresUnicos[chave].quantidade++;
+          }
+        });
+
+        const valoresUnicosArray = Object.values(valoresUnicos).sort(
+          (a, b) => a.original - b.original
+        );
+
+        // Criar tabela
+        const tableData = valoresUnicosArray.map((valor) => {
+          const diferenca = valor.ajustado - valor.original;
+          return [
+            `R$ ${valor.original.toFixed(2).replace(".", ",")}${
+              valor.quantidade > 1 ? ` (${valor.quantidade}x)` : ""
+            }`,
+            `R$ ${valor.ajustado.toFixed(2).replace(".", ",")}`,
+            `R$ ${diferenca.toFixed(2).replace(".", ",")}`,
+            valor.faixa,
+            `${valor.percentual}%`,
+          ];
+        });
+
+        doc.autoTable({
+          head: [
+            [
+              "Valor Original",
+              "Valor Ajustado",
+              "Diferença",
+              "Faixa Aplicada",
+              "Ajuste (%)",
+            ],
+          ],
+          body: tableData,
+          startY: yPos,
+          styles: { fontSize: 8 },
+          headStyles: { fillColor: [40, 167, 69] },
+          theme: "striped",
+        });
+
+        // Adicionar rodapé com data e hora
+        const agora = new Date();
+        const dataHora = `${agora.toLocaleDateString(
+          "pt-BR"
+        )} às ${agora.toLocaleTimeString("pt-BR")}`;
+        doc.setFontSize(8);
+        doc.text(
+          `Relatório gerado em: ${dataHora}`,
+          20,
+          doc.internal.pageSize.height - 10
+        );
+
+        // Salvar PDF
+        doc.save(`valores-ajustados-${agora.toISOString().split("T")[0]}.pdf`);
+      }
+
+      // Variável global para armazenar dados
+      let dadosGlobais;
+
+      // Verificar se há dados no localStorage
+      window.onload = function () {
+        const dadosSalvos = localStorage.getItem("valoresAjustados");
+
+        if (dadosSalvos) {
+          try {
+            const dados = JSON.parse(dadosSalvos);
+            receberDadosAjustados(dados);
+            // Limpar os dados do localStorage após carregar
+            localStorage.removeItem("valoresAjustados");
+          } catch (error) {
+            console.error("Erro ao processar dados:", error);
+            document.getElementById("adjustedResults").innerHTML =
+              "<h2>Erro ao carregar dados</h2><p>Não foi possível carregar os dados dos valores ajustados.</p>";
+          }
+        } else {
+          document.getElementById("adjustedResults").innerHTML =
+            "<h2>Nenhum dado encontrado</h2><p>Esta página deve ser aberta a partir do analisador de preços.</p>";
+        }
+      };
+    </script>
+  </body>
+</html>
+

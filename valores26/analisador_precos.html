@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Analisador de Preços</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f5f5f5;
+      }
+      .container {
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      .input-section {
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      textarea {
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: monospace;
+        resize: vertical;
+      }
+      button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        margin: 10px;
+      }
+      button:hover {
+        background-color: #0056b3;
+      }
+      .results {
+        margin-top: 20px;
+      }
+      .result-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+      }
+      .result-item:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .price {
+        font-weight: bold;
+        color: #007bff;
+      }
+      .count {
+        background-color: #28a745;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+      }
+      .summary {
+        background-color: #e9ecef;
+        padding: 15px;
+        border-radius: 4px;
+        margin-top: 20px;
+      }
+      .file-input {
+        margin: 10px 0;
+      }
+      .rate-section {
+        background: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin: 20px 0;
+        border: 2px solid #e9ecef;
+      }
+      .rate-config {
+        text-align: center;
+      }
+      .rate-inputs {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .rate-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .rate-row label {
+        font-weight: bold;
+        min-width: 60px;
+        text-align: right;
+      }
+      .rate-row input {
+        width: 100px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .rate-row span {
+        font-weight: bold;
+        color: #666;
+      }
+      .calculate-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      .calculate-btn:hover {
+        background-color: #218838;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>📊 Analisador de Preços</h1>
+
+      <div class="input-section">
+        <h3>Opção 1: Colar os preços aqui</h3>
+        <textarea
+          id="priceInput"
+          placeholder="Cole aqui os preços, um por linha..."
+        ></textarea>
+        <br />
+        <button onclick="analisarPrecos()">🔍 Analisar Preços</button>
+
+        <!-- <h3>Opção 2: Carregar arquivo</h3>
+        <input type="file" id="fileInput" class="file-input" accept=".txt" />
+        <br />
+        <button onclick="carregarArquivo()">📁 Carregar Arquivo</button> -->
+      </div>
+
+      <div class="rate-section" id="rateSection" style="display: none">
+        <h3>💰 Configurar Ajuste de Valores</h3>
+        <div class="rate-config">
+          <div class="rate-inputs">
+            <div class="rate-row">
+              <label>Faixa 1:</label>
+              <input type="number" id="min1" placeholder="Mínimo" step="0.01" />
+              <span>~</span>
+              <input type="number" id="max1" placeholder="Máximo" step="0.01" />
+              <span>+</span>
+              <input
+                type="number"
+                id="adjust1"
+                placeholder="Ajuste"
+                step="0.01"
+              />
+              <span>%</span>
+            </div>
+            <div class="rate-row">
+              <label>Faixa 2:</label>
+              <input type="number" id="min2" placeholder="Mínimo" step="0.01" />
+              <span>~</span>
+              <input type="number" id="max2" placeholder="Máximo" step="0.01" />
+              <span>+</span>
+              <input
+                type="number"
+                id="adjust2"
+                placeholder="Ajuste"
+                step="0.01"
+              />
+              <span>%</span>
+            </div>
+            <div class="rate-row">
+              <label>Faixa 3:</label>
+              <input type="number" id="min3" placeholder="Mínimo" step="0.01" />
+              <span>~</span>
+              <input type="number" id="max3" placeholder="Máximo" step="0.01" />
+              <span>+</span>
+              <input
+                type="number"
+                id="adjust3"
+                placeholder="Ajuste"
+                step="0.01"
+              />
+              <span>%</span>
+            </div>
+            <div class="rate-row">
+              <label>Faixa 4:</label>
+              <input type="number" id="min4" placeholder="Mínimo" step="0.01" />
+              <span>~</span>
+              <input type="number" id="max4" placeholder="Máximo" step="0.01" />
+              <span>+</span>
+              <input
+                type="number"
+                id="adjust4"
+                placeholder="Ajuste"
+                step="0.01"
+              />
+              <span>%</span>
+            </div>
+            <div class="rate-row">
+              <label>Faixa 5:</label>
+              <input type="number" id="min5" placeholder="Mínimo" step="0.01" />
+              <span>~</span>
+              <input type="number" id="max5" placeholder="Máximo" step="0.01" />
+              <span>+</span>
+              <input
+                type="number"
+                id="adjust5"
+                placeholder="Ajuste"
+                step="0.01"
+              />
+              <span>%</span>
+            </div>
+          </div>
+          <button onclick="calcularValoresAjustados()" class="calculate-btn">
+            🧮 Calcular Valores Ajustados
+          </button>
+        </div>
+      </div>
+
+      <div class="results" id="results" style="display: none">
+        <h2>📈 Resultados da Análise</h2>
+        <div class="summary" id="summary"></div>
+        <div id="priceList"></div>
+      </div>
+    </div>
+
+    <script>
+      function analisarPrecos() {
+        const input = document.getElementById("priceInput").value;
+        if (!input.trim()) {
+          alert("Por favor, insira os preços para análise!");
+          return;
+        }
+
+        processarPrecos(input);
+      }
+
+      function carregarArquivo() {
+        const fileInput = document.getElementById("fileInput");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert("Por favor, selecione um arquivo!");
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          const conteudo = e.target.result;
+          document.getElementById("priceInput").value = conteudo;
+          processarPrecos(conteudo);
+        };
+        reader.readAsText(file);
+      }
+
+      function processarPrecos(texto) {
+        // Limpar e extrair preços
+        const linhas = texto.split("\n").filter((linha) => linha.trim() !== "");
+        const precos = [];
+
+        linhas.forEach((linha) => {
+          // Extrair valores que começam com R$ e terminam com números
+          const match = linha.match(/R\$\s*([\d,]+)/);
+          if (match) {
+            // Converter vírgula para ponto e parsear como número
+            const valor = parseFloat(match[1].replace(",", "."));
+            if (!isNaN(valor)) {
+              precos.push(valor);
+            }
+          }
+        });
+
+        if (precos.length === 0) {
+          alert(
+            'Nenhum preço válido encontrado! Certifique-se de que os preços estão no formato "R$ XXX,XX"'
+          );
+          return;
+        }
+
+        // Contar repetições
+        const contagem = {};
+        precos.forEach((preco) => {
+          contagem[preco] = (contagem[preco] || 0) + 1;
+        });
+
+        // Ordenar por quantidade (mais repetidos primeiro)
+        const ordenados = Object.entries(contagem).sort((a, b) => b[1] - a[1]);
+
+        // Encontrar o valor mais repetido
+        const maisRepetido = Object.entries(contagem).sort(
+          (a, b) => b[1] - a[1]
+        )[0];
+
+        // Armazenar preços processados globalmente
+        precosProcessados = precos;
+
+        // Exibir resultados
+        exibirResultados(ordenados, precos.length, maisRepetido);
+      }
+
+      function exibirResultados(ordenados, totalPrecos, maisRepetido) {
+        const resultsDiv = document.getElementById("results");
+        const summaryDiv = document.getElementById("summary");
+        const priceListDiv = document.getElementById("priceList");
+
+        // Resumo
+        summaryDiv.innerHTML = `
+                 <h3>📋 Resumo</h3>
+                 <p><strong>Total de preços analisados:</strong> ${totalPrecos}</p>
+                 <p><strong>Valores únicos encontrados:</strong> ${
+                   ordenados.length
+                 }</p>
+                                   <p><strong>Menor valor:</strong> R$ ${parseFloat(
+                                     ordenados[0][0]
+                                   )
+                                     .toFixed(2)
+                                     .replace(".", ",")} (${
+          ordenados[0][1]
+        } vezes)</p>
+                                    <p><strong>Maior valor:</strong> R$ ${parseFloat(
+                                      ordenados[ordenados.length - 1][0]
+                                    )
+                                      .toFixed(2)
+                                      .replace(".", ",")} (${
+          ordenados[ordenados.length - 1][1]
+        } vezes)</p>
+                  <p><strong>Valor mais repetido:</strong> R$ ${parseFloat(
+                    maisRepetido[0]
+                  )
+                    .toFixed(2)
+                    .replace(".", ",")} (${maisRepetido[1]} vezes)</p>
+             `;
+
+        // Lista de preços
+        let html = "<h3>📊 Contagem de Preços (Mais Repetidos Primeiro)</h3>";
+        html += '<div style="max-height: 400px; overflow-y: auto;">';
+
+        ordenados.forEach(([preco, quantidade]) => {
+          html += `
+                    <div class="result-item">
+                        <span class="price">R$ ${parseFloat(preco)
+                          .toFixed(2)
+                          .replace(".", ",")}</span>
+                        <span class="count">${quantidade} ${
+            quantidade === 1 ? "vez" : "vezes"
+          }</span>
+                    </div>
+                `;
+        });
+
+        html += "</div>";
+        priceListDiv.innerHTML = html;
+        resultsDiv.style.display = "block";
+
+        // Mostrar seção de ajustes
+        document.getElementById("rateSection").style.display = "block";
+      }
+
+      // Variável global para armazenar os preços processados
+      let precosProcessados = [];
+
+      function calcularValoresAjustados() {
+        if (precosProcessados.length === 0) {
+          alert("Primeiro analise os preços antes de calcular os ajustes!");
+          return;
+        }
+
+        // Coletar configurações das faixas
+        const faixas = [];
+        for (let i = 1; i <= 5; i++) {
+          const min = parseFloat(document.getElementById(`min${i}`).value);
+          const max = parseFloat(document.getElementById(`max${i}`).value);
+          const ajuste = parseFloat(
+            document.getElementById(`adjust${i}`).value
+          );
+
+          if (!isNaN(min) && !isNaN(max) && !isNaN(ajuste)) {
+            faixas.push({ min, max, ajuste });
+          }
+        }
+
+        if (faixas.length === 0) {
+          alert("Configure pelo menos uma faixa de valores!");
+          return;
+        }
+
+        // Calcular valores ajustados
+        const valoresAjustados = precosProcessados.map((preco) => {
+          const faixa = faixas.find((f) => preco >= f.min && preco <= f.max);
+          if (faixa) {
+            const ajuste = preco * (faixa.ajuste / 100);
+            return {
+              original: preco,
+              ajustado: preco + ajuste,
+              faixa: `${faixa.min}~${faixa.max}`,
+              percentual: faixa.ajuste,
+            };
+          } else {
+            return {
+              original: preco,
+              ajustado: preco,
+              faixa: "Sem ajuste",
+              percentual: 0,
+            };
+          }
+        });
+
+        // Salvar dados no localStorage e abrir nova aba
+        const dados = {
+          valoresAjustados: valoresAjustados,
+          faixas: faixas,
+        };
+
+        // Salvar no localStorage
+        localStorage.setItem("valoresAjustados", JSON.stringify(dados));
+
+        // Abrir nova aba
+        const novaAba = window.open("valores_ajustados.html", "_blank");
+
+        if (!novaAba) {
+          alert(
+            "Por favor, permita pop-ups para este site para abrir os valores ajustados em uma nova aba."
+          );
+        }
+      }
+
+      // Carregar dados do arquivo sem livros.txt automaticamente se disponível
+      window.onload = function () {
+        // Tentar carregar o arquivo sem livros.txt
+        fetch("sem livros.txt")
+          .then((response) => response.text())
+          .then((data) => {
+            document.getElementById("priceInput").value = data;
+          })
+          .catch((error) => {
+            console.log(
+              "Arquivo sem livros.txt não encontrado. Use a opção de carregar arquivo."
+            );
+          });
+
+        // Preencher valores de exemplo nas faixas
+        document.getElementById("min1").value = "300";
+        document.getElementById("max1").value = "350";
+        document.getElementById("adjust1").value = "5";
+
+        document.getElementById("min2").value = "351";
+        document.getElementById("max2").value = "400";
+        document.getElementById("adjust2").value = "7";
+
+        document.getElementById("min3").value = "401";
+        document.getElementById("max3").value = "500";
+        document.getElementById("adjust3").value = "10";
+
+        document.getElementById("min4").value = "501";
+        document.getElementById("max4").value = "700";
+        document.getElementById("adjust4").value = "12";
+
+        document.getElementById("min5").value = "701";
+        document.getElementById("max5").value = "1000";
+        document.getElementById("adjust5").value = "15";
+      };
+    </script>
+  </body>
+</html>
