@@ -120,6 +120,14 @@
         font-weight: bold;
         color: #666;
       }
+      .adjust-type {
+        width: 60px;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 14px;
+      }
       .calculate-btn {
         background-color: #28a745;
         color: white;
@@ -170,7 +178,10 @@
                 placeholder="Ajuste"
                 step="0.01"
               />
-              <span>%</span>
+              <select id="type1" class="adjust-type">
+                <option value="percent">%</option>
+                <option value="fixed">R$</option>
+              </select>
             </div>
             <div class="rate-row">
               <label>Faixa 2:</label>
@@ -184,7 +195,10 @@
                 placeholder="Ajuste"
                 step="0.01"
               />
-              <span>%</span>
+              <select id="type2" class="adjust-type">
+                <option value="percent">%</option>
+                <option value="fixed">R$</option>
+              </select>
             </div>
             <div class="rate-row">
               <label>Faixa 3:</label>
@@ -198,7 +212,10 @@
                 placeholder="Ajuste"
                 step="0.01"
               />
-              <span>%</span>
+              <select id="type3" class="adjust-type">
+                <option value="percent">%</option>
+                <option value="fixed">R$</option>
+              </select>
             </div>
             <div class="rate-row">
               <label>Faixa 4:</label>
@@ -212,7 +229,10 @@
                 placeholder="Ajuste"
                 step="0.01"
               />
-              <span>%</span>
+              <select id="type4" class="adjust-type">
+                <option value="percent">%</option>
+                <option value="fixed">R$</option>
+              </select>
             </div>
             <div class="rate-row">
               <label>Faixa 5:</label>
@@ -226,7 +246,10 @@
                 placeholder="Ajuste"
                 step="0.01"
               />
-              <span>%</span>
+              <select id="type5" class="adjust-type">
+                <option value="percent">%</option>
+                <option value="fixed">R$</option>
+              </select>
             </div>
           </div>
           <button onclick="calcularValoresAjustados()" class="calculate-btn">
@@ -409,9 +432,10 @@
           const ajuste = parseFloat(
             document.getElementById(`adjust${i}`).value
           );
+          const tipo = document.getElementById(`type${i}`).value;
 
           if (!isNaN(min) && !isNaN(max) && !isNaN(ajuste)) {
-            faixas.push({ min, max, ajuste });
+            faixas.push({ min, max, ajuste, tipo });
           }
         }
 
@@ -424,12 +448,24 @@
         const valoresAjustados = precosProcessados.map((preco) => {
           const faixa = faixas.find((f) => preco >= f.min && preco <= f.max);
           if (faixa) {
-            const ajuste = preco * (faixa.ajuste / 100);
+            let ajuste;
+            let percentual;
+
+            if (faixa.tipo === "percent") {
+              ajuste = preco * (faixa.ajuste / 100);
+              percentual = faixa.ajuste;
+            } else {
+              ajuste = faixa.ajuste; // Valor fixo
+              percentual = (ajuste / preco) * 100;
+            }
+
             return {
               original: preco,
               ajustado: preco + ajuste,
               faixa: `${faixa.min}~${faixa.max}`,
-              percentual: faixa.ajuste,
+              percentual: percentual,
+              tipo: faixa.tipo,
+              valorAjuste: faixa.ajuste,
             };
           } else {
             return {
@@ -437,6 +473,8 @@
               ajustado: preco,
               faixa: "Sem ajuste",
               percentual: 0,
+              tipo: "none",
+              valorAjuste: 0,
             };
           }
         });

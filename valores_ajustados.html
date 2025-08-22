@@ -185,13 +185,14 @@
             <h3>📋 Comparação de Valores (Valores Únicos)</h3>
             <table class="comparison-table">
               <thead>
-                <tr>
-                  <th>Valor Original</th>
-                  <th>Valor Ajustado</th>
-                  <th>Diferença</th>
-                  <th>Faixa Aplicada</th>
-                  <th>Ajuste (%)</th>
-                </tr>
+                                 <tr>
+                   <th>Valor Original</th>
+                   <th>Valor Ajustado</th>
+                   <th>Diferença</th>
+                   <th>Faixa Aplicada</th>
+                   <th>Tipo</th>
+                   <th>Ajuste</th>
+                 </tr>
               </thead>
               <tbody>
           `;
@@ -225,17 +226,24 @@
           const diferencaPercentual =
             valor.original > 0 ? (diferenca / valor.original) * 100 : 0;
 
+          const tipoAjuste = valor.tipo === "percent" ? "%" : "R$";
+          const valorAjuste =
+            valor.tipo === "percent"
+              ? `${valor.valorAjuste}%`
+              : `R$ ${formatarMoeda(valor.valorAjuste)}`;
+
           tableHtml += `
-                <tr>
-                  <td>R$ ${formatarMoeda(valor.original)} ${
+                 <tr>
+                   <td>R$ ${formatarMoeda(valor.original)} ${
             valor.quantidade > 1 ? `(${valor.quantidade}x)` : ""
           }</td>
-                  <td>R$ ${formatarMoeda(valor.ajustado)}</td>
-                  <td>R$ ${formatarMoeda(diferenca)}</td>
-                  <td>${valor.faixa}</td>
-                  <td>${valor.percentual}%</td>
-                </tr>
-              `;
+                   <td>R$ ${formatarMoeda(valor.ajustado)}</td>
+                   <td>R$ ${formatarMoeda(diferenca)}</td>
+                   <td>${valor.faixa}</td>
+                   <td>${tipoAjuste}</td>
+                   <td>${valorAjuste}</td>
+                 </tr>
+               `;
         });
 
         tableHtml += `
@@ -368,6 +376,12 @@
         // Criar tabela
         const tableData = valoresUnicosArray.map((valor) => {
           const diferenca = valor.ajustado - valor.original;
+          const tipoAjuste = valor.tipo === "percent" ? "%" : "R$";
+          const valorAjuste =
+            valor.tipo === "percent"
+              ? `${valor.valorAjuste}%`
+              : `R$ ${formatarMoeda(valor.valorAjuste)}`;
+
           return [
             `R$ ${formatarMoeda(valor.original)}${
               valor.quantidade > 1 ? ` (${valor.quantidade}x)` : ""
@@ -375,7 +389,8 @@
             `R$ ${formatarMoeda(valor.ajustado)}`,
             `R$ ${formatarMoeda(diferenca)}`,
             valor.faixa,
-            `${valor.percentual}%`,
+            tipoAjuste,
+            valorAjuste,
           ];
         });
 
@@ -386,7 +401,8 @@
               "Valor Ajustado",
               "Diferença",
               "Faixa Aplicada",
-              "Ajuste (%)",
+              "Tipo",
+              "Ajuste",
             ],
           ],
           body: tableData,
